@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: chat-postgres
+    environment:
+      POSTGRES_DB: chatdb
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chat
+    ports:
+      - "5432:5432"
+    volumes:
+      - chat-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chat -d chatdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+# Kafka chua can o buoc nay: V1 chi la schema, chua co publisher hay consumer.
+# Them vao khi lam Buoc 5 trong .claude/specs/06-tai-va-ke-hoach.md
+
+volumes:
+  chat-pgdata:

@@ -1,0 +1,45 @@
+server:
+  port: 8888
+spring:
+  application:
+    name: chat-service
+
+  # Doc file .env o goc project (dang KEY=value) neu co. Spring KHONG tu doc .env,
+  # dong nay moi khien no doc. .env da nam trong .gitignore, khong vao repo.
+  config:
+    import: optional:file:.env[.properties]
+
+  # Java 21: request chay tren virtual thread, nen khong can thread pool rieng cho
+  # tang web. Chi noi nao can backpressure moi dung executor rieng (xem AsyncConfig).
+  threads:
+    virtual:
+      enabled: true
+
+  # Supabase. Dat 3 bien moi truong, KHONG hardcode vao file nay (file nay vao repo).
+  #   SUPABASE_DB_URL=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require
+  #   SUPABASE_DB_USER=postgres
+  #   SUPABASE_DB_PASSWORD=...
+  # Dung cong 5432. KHONG dung pooler 6543 (transaction mode) vi Flyway can
+  # advisory lock o muc session. Chi tiet: .claude/rules/architecture.md
+  datasource:
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 10000
+
+  jpa:
+    # Flyway la nguon su that duy nhat cua schema. Khong de Hibernate tu sinh
+    # hay sua bang: nhu vay schema o local va production se lech nhau.
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    "com.side_project.chat_service": DEBUG

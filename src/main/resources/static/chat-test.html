@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>chat-service · test client</title>
+<!-- shortcut: trang test phuc vu demo, nam trong static nen ship kem jar; xoa khi khong can -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/7.0.0/stomp.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#f7f7f8; --card:#fff; --line:#e3e3e6; --ink:#1a1a1e; --muted:#6b6b72;
+    --accent:#2d6cdf; --ok:#1a7f4b; --err:#c0392b; --mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+    --bg:#16171a; --card:#1e1f24; --line:#2e3036; --ink:#e8e8ea; --muted:#9a9aa2; --accent:#5b8def;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px}
+  h1{font-size:18px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1100px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 2px}
+  input,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
+  textarea{resize:vertical;min-height:40px}
+  button{padding:7px 12px;border:0;border-radius:7px;background:var(--accent);color:#fff;font:inherit;cursor:pointer;margin:6px 6px 0 0}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;gap:8px;align-items:flex-end}
+  .row>div{flex:1}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:middle}
+  .dot.on{background:var(--ok)} .dot.off{background:var(--err)}
+  .list{max-height:220px;overflow:auto;margin-top:8px}
+  .item{padding:7px 9px;border:1px solid var(--line);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:13px}
+  .item:hover{border-color:var(--accent)}
+  .item.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  .item small{color:var(--muted)}
+  .msg{padding:6px 9px;border-radius:7px;margin-bottom:5px;font-size:13px;background:var(--bg);border:1px solid var(--line)}
+  .msg .meta{color:var(--muted);font-size:11px;font-family:var(--mono)}
+  #log{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px;max-height:320px;overflow:auto;white-space:pre-wrap}
+  .log-ws{color:var(--accent)} .log-ok{color:var(--ok)} .log-err{color:var(--err)} .log-mut{color:var(--muted)}
+  .pill{font-family:var(--mono);font-size:11px;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+</style>
+</head>
+<body>
+<h1>chat-service · test client</h1>
+<div class="sub">Gửi tin bằng REST, nhận realtime qua WebSocket. Danh tính lấy từ ô "Tôi là" (gắn vào header REST và query param WS).</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>1 · Kết nối</h2>
+    <label>Tôi là (userId)</label>
+    <input id="me" value="an">
+    <div style="margin-top:8px">
+      <span id="dot" class="dot off"></span><span id="wsStatus">WebSocket: chưa kết nối</span>
+    </div>
+    <button id="btnConnect">Kết nối WS</button>
+    <button id="btnDisconnect" class="ghost" disabled>Ngắt</button>
+    <div class="sub" style="margin-top:8px">Mở trang này ở hai tab với hai userId khác nhau để thấy realtime.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Hội thoại</h2>
+    <div class="row">
+      <div><label>Mở DM với</label><input id="dmOther" value="binh"></div>
+      <button id="btnDm">Mở DM</button>
+    </div>
+    <div class="row">
+      <div><label>Tạo nhóm — tên</label><input id="grpTitle" value="Nhom test"></div>
+    </div>
+    <label>Thành viên (userId, cách nhau dấu phẩy)</label>
+    <div class="row">
+      <div><input id="grpMembers" value="binh,cuong"></div>
+      <button id="btnGroup">Tạo nhóm</button>
+    </div>
+    <button id="btnList" class="ghost">Tải danh sách</button>
+    <div id="convList" class="list"></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Tin nhắn <span id="selConv" class="pill">chưa chọn hội thoại</span></h2>
+    <div id="msgList" class="list" style="max-height:260px"></div>
+    <label>Nội dung</label>
+    <textarea id="msgBody" placeholder="gõ tin rồi Gửi..."></textarea>
+    <button id="btnSend" disabled>Gửi tin</button>
+    <button id="btnReadLast" class="ghost" disabled>Đánh dấu đã đọc tin cuối</button>
+    <button id="btnLoad" class="ghost" disabled>Tải lại lịch sử</button>
+  </div>
+
+  <div class="card">
+    <h2>4 · Sự kiện realtime + log</h2>
+    <div id="log"></div>
+    <button id="btnClear" class="ghost">Xóa log</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const me = () => $('me').value.trim();
+let client = null, selected = null, lastSeq = 0;
+
+function log(msg, cls='log-mut'){
+  const t = new Date().toLocaleTimeString();
+  $('log').innerHTML = `<span class="${cls}">[${t}] ${msg}</span>\n` + $('log').innerHTML;
+}
+
+async function api(method, path, body){
+  const res = await fetch(path, {
+    method,
+    headers: {'Content-Type':'application/json', 'X-User-Id': me()},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const text = await res.text();
+  let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if(!res.ok){ log(`${method} ${path} → ${res.status} ${text}`, 'log-err'); throw {status:res.status, data}; }
+  log(`${method} ${path} → ${res.status}`, 'log-ok');
+  return {status:res.status, data};
+}
+
+$('btnConnect').onclick = () => {
+  if(!me()){ alert('Nhập userId'); return; }
+  const url = `ws://${location.host}/ws/chat?userId=${encodeURIComponent(me())}`;
+  client = new StompJs.Client({ brokerURL:url, reconnectDelay:0 });
+  client.onConnect = () => {
+    $('dot').className='dot on'; $('wsStatus').textContent=`WebSocket: đã kết nối (${me()})`;
+    $('btnConnect').disabled=true; $('btnDisconnect').disabled=false;
+    log(`WS connected: ${me()}`, 'log-ok');
+    client.subscribe('/user/queue/chat', frame => {
+      const ev = JSON.parse(frame.body);
+      log(`WS ← ${ev.type} ${JSON.stringify(ev.payload||ev)}`, 'log-ws');
+      if(selected && ev.payload && ev.payload.conversationId===selected) loadHistory();
+    });
+  };
+  client.onStompError = f => log('STOMP error: '+f.headers.message, 'log-err');
+  client.onWebSocketError = () => log('WebSocket error (server có chạy? đúng port 8888?)', 'log-err');
+  client.onWebSocketClose = () => { $('dot').className='dot off'; $('wsStatus').textContent='WebSocket: đã đóng';
+    $('btnConnect').disabled=false; $('btnDisconnect').disabled=true; };
+  client.activate();
+};
+$('btnDisconnect').onclick = () => client && client.deactivate();
+
+$('btnDm').onclick = async () => {
+  try{ const {data,status} = await api('POST','/api/v1/conversations',
+        {type:'DM', otherUserId:$('dmOther').value.trim()});
+       log(`DM ${status===201?'tạo mới':'đã có'}: ${data.id}`, 'log-ok'); listConvs(); }catch(e){}
+};
+$('btnGroup').onclick = async () => {
+  const members = $('grpMembers').value.split(',').map(s=>s.trim()).filter(Boolean);
+  try{ const {data} = await api('POST','/api/v1/conversations',
+        {type:'GROUP', title:$('grpTitle').value.trim(), memberIds:members});
+       log(`Nhóm tạo: ${data.id}`, 'log-ok'); listConvs(); }catch(e){}
+};
+$('btnList').onclick = listConvs;
+async function listConvs(){
+  try{
+    const {data} = await api('GET','/api/v1/conversations');
+    $('convList').innerHTML = data.map(c =>
+      `<div class="item ${c.id===selected?'sel':''}" data-id="${c.id}">
+        <b>${c.type==='DM' ? (c.dmKey||'DM') : (c.title||'(nhóm)')}</b>
+        <small> · ${c.type} · lastSeq ${c.lastSeq}</small><br>
+        <small>${c.id}</small></div>`).join('') || '<div class="sub">chưa có hội thoại</div>';
+    document.querySelectorAll('#convList .item').forEach(el =>
+      el.onclick = () => selectConv(el.dataset.id));
+  }catch(e){}
+}
+function selectConv(id){
+  selected = id;
+  $('selConv').textContent = id.slice(0,8)+'…';
+  $('btnSend').disabled=false; $('btnReadLast').disabled=false; $('btnLoad').disabled=false;
+  document.querySelectorAll('#convList .item').forEach(el=>
+    el.classList.toggle('sel', el.dataset.id===id));
+  loadHistory();
+}
+
+$('btnSend').onclick = async () => {
+  if(!selected) return;
+  const body = $('msgBody').value;
+  if(!body.trim()) return;
+  const clientMessageId = crypto.randomUUID();
+  try{
+    await api('POST',`/api/v1/conversations/${selected}/messages`,
+      {clientMessageId, type:'TEXT', body});
+    $('msgBody').value='';
+    loadHistory();
+  }catch(e){}
+};
+$('btnLoad').onclick = loadHistory;
+async function loadHistory(){
+  if(!selected) return;
+  try{
+    const {data} = await api('GET',`/api/v1/conversations/${selected}/messages?limit=200`);
+    const msgs = data.slice().sort((a,b)=>a.seq-b.seq);
+    lastSeq = msgs.length ? msgs[msgs.length-1].seq : 0;
+    $('msgList').innerHTML = msgs.map(m =>
+      `<div class="msg"><span class="meta">#${m.seq} ${m.senderId} · ${m.messageId.slice(0,8)}</span><br>${escapeHtml(m.body||'')}</div>`
+    ).join('') || '<div class="sub">chưa có tin</div>';
+    $('msgList').scrollTop = $('msgList').scrollHeight;
+  }catch(e){}
+}
+$('btnReadLast').onclick = async () => {
+  if(!selected || !lastSeq) return;
+  try{ await api('POST',`/api/v1/conversations/${selected}/read`, {seq:lastSeq});
+       log(`Đã đọc tới seq ${lastSeq}`, 'log-ok'); }catch(e){}
+};
+
+$('btnClear').onclick = () => $('log').innerHTML='';
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+log('Sẵn sàng. B1: nhập userId và Kết nối WS. B2: mở/tạo hội thoại. B3: chọn rồi gửi tin.', 'log-mut');
+</script>
+</body>
+</html>
