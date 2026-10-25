@@ -15,16 +15,15 @@ spring:
     virtual:
       enabled: true
 
-  # Supabase. Dat 3 bien moi truong, KHONG hardcode vao file nay (file nay vao repo).
-  #   SUPABASE_DB_URL=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require
-  #   SUPABASE_DB_USER=postgres
-  #   SUPABASE_DB_PASSWORD=...
-  # Dung cong 5432. KHONG dung pooler 6543 (transaction mode) vi Flyway can
-  # advisory lock o muc session. Chi tiet: .claude/rules/architecture.md
+  # Postgres. Dat 3 bien moi truong, KHONG hardcode vao file nay (file nay vao repo).
+  # Chay DB local bang docker-compose.yaml (service ds-chat):
+  #   DB_URL=jdbc:postgresql://localhost:5432/chat_service
+  #   DB_USER=chat
+  #   DB_PASSWORD=chat
   datasource:
-    url: ${SUPABASE_DB_URL}
-    username: ${SUPABASE_DB_USER}
-    password: ${SUPABASE_DB_PASSWORD}
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 5
       connection-timeout: 10000

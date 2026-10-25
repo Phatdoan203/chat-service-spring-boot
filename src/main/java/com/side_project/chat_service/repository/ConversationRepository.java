@@ -23,7 +23,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
             INSERT INTO conversation (id, type, dm_key, created_by)
             VALUES (:id, 'DM', :dmKey, :createdBy)
             ON CONFLICT (dm_key) DO NOTHING""")
-    int insertDmIfAbsent(@Param("id") UUID id, @Param("dmKey") String dmKey, @Param("createdBy") String createdBy);
+    int insertDmIfAbsent(@Param("id") UUID id, @Param("dmKey") String dmKey, @Param("createdBy") UUID createdBy);
 
     // Mot query, khong N+1.
     // shortcut: cursor theo thoi gian, hai hoi thoai trung mili-giay co the sot o ranh gioi trang, nang len keyset (time, id) khi can
@@ -35,7 +35,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
             WHERE m.conversationId = c.id AND m.userId = :me AND m.status = 'ACTIVE'
               AND COALESCE(c.lastMessageAt, c.createdAt) < :before
             ORDER BY COALESCE(c.lastMessageAt, c.createdAt) DESC""")
-    List<ConversationListView> findMine(@Param("me") String me, @Param("before") Instant before, Pageable page);
+    List<ConversationListView> findMine(@Param("me") UUID me, @Param("before") Instant before, Pageable page);
 
     // Cap seq: KHONG them @Modifying, neu khong se mat gia tri RETURNING. Khoa dong toi het transaction (ADR-0005).
     @Query(nativeQuery = true, value = """

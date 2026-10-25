@@ -1,0 +1,20 @@
+services:
+  ds-chat:
+    image: postgres:16
+    container_name: ds-chat
+    environment:
+      POSTGRES_DB: chat_service
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chat
+    ports:
+      - "5432:5432"
+    volumes:
+      - ds-chat-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chat -d chat_service"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ds-chat-data:

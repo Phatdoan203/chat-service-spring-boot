@@ -7,6 +7,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -26,6 +27,12 @@ public class GlobalExceptionHandler {
                 .reduce((a, b) -> a + "; " + b)
                 .orElse(ErrorCode.INVALID_REQUEST.defaultMessage());
         return problem(ErrorCode.INVALID_REQUEST.status(), detail, ErrorCode.INVALID_REQUEST.name());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("api error code={} param={}", "BAD_IDENTIFIER", ex.getName());
+        return problem(HttpStatus.BAD_REQUEST, "Tham so '" + ex.getName() + "' sai dinh dang", "BAD_IDENTIFIER");
     }
 
     @ExceptionHandler(Exception.class)

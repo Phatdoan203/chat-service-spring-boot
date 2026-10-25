@@ -59,7 +59,7 @@ public class MessageServiceImpl implements MessageService {
     // Co y KHONG @Transactional: tx gui va tx doc-lai la hai transaction rieng. Vi pham unique lam Postgres
     // abort tx gui, nen SELECT tin cu phai nam ngoai no; rollback tron ven cung huy luon last_seq+1 (khong ho seq).
     @Override
-    public Sent send(String me, UUID conversationId, SendMessageRequest request) {
+    public Sent send(UUID me, UUID conversationId, SendMessageRequest request) {
         boolean missing = request.type() == MessageType.TEXT
                 ? request.body() == null || request.body().isBlank()
                 : request.attachmentId() == null || request.attachmentId().isBlank();
@@ -69,6 +69,8 @@ public class MessageServiceImpl implements MessageService {
         try {
             return new Sent(tx.execute(s -> insertMessage(me, conversationId, request)), true);
         } catch (DataIntegrityViolationException e) {
+            // Chi co the la unique idempotency (cid, sender, clientMessageId). FK sender_id khong ban o day:
+            // requireActive() da bao dam co dong conversation_member (keo theo app_user) truoc khi INSERT.
             var existing = tx.execute(s -> messages
                     .findByConversationIdAndSenderIdAndClientMessageId(conversationId, me, request.clientMessageId())
                     .map(MessageResponse::from));
@@ -77,7 +79,7 @@ public class MessageServiceImpl implements MessageService {
         }
     }
 
-    private MessageResponse insertMessage(String me, UUID cid, SendMessageRequest r) {
+    private MessageResponse insertMessage(UUID me, UUID cid, SendMessageRequest r) {
         requireActive(cid, me);
         Long seq = conversations.nextSeq(cid); // khoa dong conversation tu day
         if (seq == null) {
@@ -98,7 +100,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MessageResponse> history(String me, UUID conversationId, Long beforeSeq, Long afterSeq, int limit) {
+    public List<MessageResponse> history(UUID me, UUID conversationId, Long beforeSeq, Long afterSeq, int limit) {
         long joinSeq = requireActive(conversationId, me).getJoinSeq();
         var page = PageRequest.of(0, Math.min(limit <= 0 ? DEFAULT_LIMIT : limit, MAX_LIMIT));
         var found = afterSeq != null
@@ -109,7 +111,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public void markRead(String me, UUID conversationId, long seq) {
+    public void markRead(UUID me, UUID conversationId, long seq) {
         requireActive(conversationId, me);
         var conversation = conversations.findById(conversationId)
                 .orElseThrow(() -> new ApiException(ErrorCode.CONVERSATION_NOT_FOUND));
@@ -121,7 +123,7 @@ public class MessageServiceImpl implements MessageService {
         }
     }
 
-    private ConversationMember requireActive(UUID conversationId, String userId) {
+    private ConversationMember requireActive(UUID conversationId, UUID userId) {
         return members.findByConversationIdAndUserIdAndStatus(conversationId, userId, MemberStatus.ACTIVE)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_A_MEMBER));
     }

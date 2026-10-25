@@ -12,10 +12,10 @@ public interface MessageService {
     record Sent(MessageResponse message, boolean created) {
     }
 
-    Sent send(String me, UUID conversationId, SendMessageRequest request);
+    Sent send(UUID me, UUID conversationId, SendMessageRequest request);
 
     /** afterSeq != null: lay bu (cu truoc); nguoc lai: cuon len tu beforeSeq (moi truoc). Tran 200. */
-    List<MessageResponse> history(String me, UUID conversationId, Long beforeSeq, Long afterSeq, int limit);
+    List<MessageResponse> history(UUID me, UUID conversationId, Long beforeSeq, Long afterSeq, int limit);
 
-    void markRead(String me, UUID conversationId, long seq);
+    void markRead(UUID me, UUID conversationId, long seq);
 }

@@ -26,7 +26,7 @@ public class ConversationMember {
     private UUID conversationId;
 
     @Id
-    private String userId;
+    private UUID userId;
 
     @Enumerated(EnumType.STRING)
     private MemberRole role;
@@ -49,7 +49,7 @@ public class ConversationMember {
     @Column(updatable = false)
     private Instant leftAt;
 
-    public ConversationMember(UUID conversationId, String userId, MemberRole role, long joinSeq) {
+    public ConversationMember(UUID conversationId, UUID userId, MemberRole role, long joinSeq) {
         this.conversationId = conversationId;
         this.userId = userId;
         this.role = role;

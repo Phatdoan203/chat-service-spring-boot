@@ -40,7 +40,7 @@ public class ChatFanout {
             try {
                 // gui cho ca nguoi gui: client khu trung theo clientMessageId
                 var out = new WsEvent<>("MESSAGE_CREATED", e.conversationId(), e);
-                members.findActiveUserIds(e.conversationId()).forEach(u -> ws.convertAndSendToUser(u, DESTINATION, out));
+                members.findActiveUserIds(e.conversationId()).forEach(u -> ws.convertAndSendToUser(u.toString(), DESTINATION, out));
             } catch (RuntimeException ex) {
                 fail("message.fanout.failed", e.conversationId(), e.messageId(), ex);
             }
@@ -52,7 +52,7 @@ public class ChatFanout {
     public void onReadUpdated(ReadUpdatedEvent e) {
         fanoutExecutor.execute(() -> {
             try {
-                ws.convertAndSendToUser(e.userId(), DESTINATION, new WsEvent<>("READ_UPDATED", e.conversationId(), e));
+                ws.convertAndSendToUser(e.userId().toString(), DESTINATION, new WsEvent<>("READ_UPDATED", e.conversationId(), e));
             } catch (RuntimeException ex) {
                 fail("read.fanout.failed", e.conversationId(), null, ex);
             }

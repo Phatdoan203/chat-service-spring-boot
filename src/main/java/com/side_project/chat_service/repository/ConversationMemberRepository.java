@@ -20,13 +20,13 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
     @Query(nativeQuery = true, value = """
             INSERT INTO conversation_member (conversation_id, user_id, role, join_seq)
             VALUES (:cid, :a, 'MEMBER', 0), (:cid, :b, 'MEMBER', 0)""")
-    int insertDmMembers(@Param("cid") UUID conversationId, @Param("a") String a, @Param("b") String b);
+    int insertDmMembers(@Param("cid") UUID conversationId, @Param("a") UUID a, @Param("b") UUID b);
 
-    Optional<ConversationMember> findByConversationIdAndUserIdAndStatus(UUID conversationId, String userId,
+    Optional<ConversationMember> findByConversationIdAndUserIdAndStatus(UUID conversationId, UUID userId,
             MemberStatus status);
 
     @Query("SELECT m.userId FROM ConversationMember m WHERE m.conversationId = :cid AND m.status = 'ACTIVE'")
-    List<String> findActiveUserIds(@Param("cid") UUID conversationId);
+    List<UUID> findActiveUserIds(@Param("cid") UUID conversationId);
 
     // Keo ca delivered len, neu khong vo CHECK (last_read_seq <= last_delivered_seq).
     @Modifying
@@ -34,7 +34,7 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
             UPDATE conversation_member
             SET last_delivered_seq = GREATEST(last_delivered_seq, :seq), last_read_seq = GREATEST(last_read_seq, :seq)
             WHERE conversation_id = :cid AND user_id = :uid""")
-    int bumpCursors(@Param("cid") UUID conversationId, @Param("uid") String userId, @Param("seq") long seq);
+    int bumpCursors(@Param("cid") UUID conversationId, @Param("uid") UUID userId, @Param("seq") long seq);
 
     // Chi tang: tra 0 dong khi seq khong moi hon con tro hien tai.
     @Modifying
@@ -42,5 +42,5 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
             UPDATE conversation_member
             SET last_read_seq = :seq, last_delivered_seq = GREATEST(last_delivered_seq, :seq)
             WHERE conversation_id = :cid AND user_id = :uid AND last_read_seq < :seq""")
-    int advanceRead(@Param("cid") UUID conversationId, @Param("uid") String userId, @Param("seq") long seq);
+    int advanceRead(@Param("cid") UUID conversationId, @Param("uid") UUID userId, @Param("seq") long seq);
 }

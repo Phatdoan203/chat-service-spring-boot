@@ -2,6 +2,7 @@ package com.side_project.chat_service.controller;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -49,7 +50,7 @@ public class ConversationController {
         @ApiResponse(responseCode = "422", description = "Body sai (thieu/rong/qua dai) hoac tu nhan tin voi chinh minh", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
         @PostMapping
         public ResponseEntity<ConversationResponse> create(
-                        @Parameter(description = ME) @RequestHeader("X-User-Id") String me,
+                        @Parameter(description = ME) @RequestHeader("X-User-Id") UUID me,
                         @Valid @RequestBody CreateConversationRequest request) {
                 var opened = service.create(me, request);
                 return ResponseEntity.status(opened.created() ? HttpStatus.CREATED : HttpStatus.OK)
@@ -61,7 +62,7 @@ public class ConversationController {
                         + "Chua co tin cuoi dang day du va unread.")
         @ApiResponse(responseCode = "200", description = "Mang rong neu chua co hoi thoai nao")
         @GetMapping
-        public List<ConversationResponse> listMine(@Parameter(description = ME) @RequestHeader("X-User-Id") String me,
+        public List<ConversationResponse> listMine(@Parameter(description = ME) @RequestHeader("X-User-Id") UUID me,
                         @Parameter(description = "Toi da 100; gia tri ngoai khoang bi kep") @RequestParam(defaultValue = "30") int limit,
                         @Parameter(description = "Cursor, ISO-8601 UTC. Bo trong = trang dau") @RequestParam(required = false) Instant beforeAt) {
                 return service.listMine(me, limit, beforeAt);

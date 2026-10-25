@@ -20,11 +20,11 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             INSERT INTO message (id, conversation_id, seq, sender_id, type, body, attachment_id, client_message_id, created_at)
             VALUES (:id, :cid, :seq, :sender, :type, :body, :attachmentId, :clientMessageId, :createdAt)""")
     int insert(@Param("id") UUID id, @Param("cid") UUID conversationId, @Param("seq") long seq,
-            @Param("sender") String senderId, @Param("type") String type, @Param("body") String body,
+            @Param("sender") UUID senderId, @Param("type") String type, @Param("body") String body,
             @Param("attachmentId") String attachmentId, @Param("clientMessageId") String clientMessageId,
             @Param("createdAt") Instant createdAt);
 
-    Optional<Message> findByConversationIdAndSenderIdAndClientMessageId(UUID conversationId, String senderId,
+    Optional<Message> findByConversationIdAndSenderIdAndClientMessageId(UUID conversationId, UUID senderId,
             String clientMessageId);
 
     // Cuon len: seq trong (after, before), moi nhat truoc.

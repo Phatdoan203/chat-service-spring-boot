@@ -40,17 +40,18 @@ public class OpenApiConfig {
             5. Sau reconnect, lay bu bang REST. Server khong tu phat lai.
 
             ### Kiem chung bang tay
+            `<U1>`, `<U2>`, `<U3>` la `id` tra ve tu `POST /api/v1/users` (tao truoc, FK bat buoc).
             Mo DM hai lan - lan dau 201, lan sau 200, cung `conversationId`:
             ```
             curl -i -X POST localhost:8080/api/v1/conversations \\
-              -H 'Content-Type: application/json' -H 'X-User-Id: u-1' \\
-              -d '{"type":"DM","otherUserId":"u-2"}'
+              -H 'Content-Type: application/json' -H 'X-User-Id: <U1>' \\
+              -d '{"type":"DM","otherUserId":"<U2>"}'
             ```
             Goi song song - phai chi ra mot hang:
             ```
             for i in 1 2 3 4 5; do (curl -s -o /dev/null -X POST localhost:8080/api/v1/conversations \\
-              -H 'Content-Type: application/json' -H 'X-User-Id: u-1' \\
-              -d '{"type":"DM","otherUserId":"u-3"}' &) ; done
+              -H 'Content-Type: application/json' -H 'X-User-Id: <U1>' \\
+              -d '{"type":"DM","otherUserId":"<U3>"}' &) ; done
             ```
             ```sql
             SELECT dm_key, count(*) FROM conversation WHERE type='DM' GROUP BY dm_key HAVING count(*) > 1;
@@ -58,8 +59,8 @@ public class OpenApiConfig {
             ```
             Rang buoc DB phai chan (moi cau duoi day phai LOI):
             ```sql
-            INSERT INTO conversation (type, dm_key, created_by) VALUES ('DM','u-1:u-2','u-1');  -- trung dm_key
-            INSERT INTO conversation (type, dm_key, created_by) VALUES ('GROUP','x:y','u-1');   -- GROUP co dm_key
+            INSERT INTO conversation (type, dm_key, created_by) VALUES ('DM','<U1>:<U2>','<U1>');  -- trung dm_key
+            INSERT INTO conversation (type, dm_key, created_by) VALUES ('GROUP','x:y','<U1>');   -- GROUP co dm_key
             UPDATE conversation_member SET last_read_seq = last_delivered_seq + 1;              -- da doc > da nhan
             ```
 

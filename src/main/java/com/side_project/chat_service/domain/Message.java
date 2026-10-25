@@ -24,7 +24,7 @@ public class Message {
     private UUID id;
     private UUID conversationId;
     private long seq;
-    private String senderId;
+    private UUID senderId;
 
     @Enumerated(EnumType.STRING)
     private MessageType type;

@@ -6,7 +6,7 @@ import java.util.UUID;
 import com.side_project.chat_service.domain.Message;
 
 public record MessageResponse(
-        UUID messageId, UUID conversationId, long seq, String senderId, String clientMessageId,
+        UUID messageId, UUID conversationId, long seq, UUID senderId, String clientMessageId,
         String type, String body, Instant createdAt) {
 
     public static MessageResponse from(Message m) {

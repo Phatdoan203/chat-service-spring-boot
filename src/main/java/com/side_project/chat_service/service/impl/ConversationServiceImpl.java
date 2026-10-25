@@ -41,14 +41,14 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     @Transactional
-    public Opened create(String me, CreateConversationRequest request) {
+    public Opened create(UUID me, CreateConversationRequest request) {
         return switch (request) {
             case CreateDmRequest dm -> openDirect(me, dm.otherUserId());
             case CreateGroupRequest g -> new Opened(createGroup(me, g.title(), g.memberIds()), true);
         };
     }
 
-    private Opened openDirect(String me, String otherUserId) {
+    private Opened openDirect(UUID me, UUID otherUserId) {
         if (me.equals(otherUserId)) {
             throw new ApiException(ErrorCode.INVALID_REQUEST, "Khong the nhan tin voi chinh minh");
         }
@@ -63,7 +63,7 @@ public class ConversationServiceImpl implements ConversationService {
         return new Opened(ConversationResponse.from(c), created);
     }
 
-    private ConversationResponse createGroup(String me, String title, List<String> memberIds) {
+    private ConversationResponse createGroup(UUID me, String title, List<UUID> memberIds) {
         var c = conversations.saveAndFlush(new Conversation(UUID.randomUUID(), ConversationType.GROUP, null, title, me));
         long joinSeq = c.getLastSeq();
         members.save(new ConversationMember(c.getId(), me, MemberRole.OWNER, joinSeq));
@@ -74,7 +74,7 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ConversationResponse> listMine(String me, int limit, Instant cursor) {
+    public List<ConversationResponse> listMine(UUID me, int limit, Instant cursor) {
         var page = PageRequest.of(0, Math.max(1, Math.min(limit, MAX_LIMIT)));
         return conversations.findMine(me, cursor == null ? NO_CURSOR : cursor, page).stream()
                 .map(ConversationResponse::from).toList();

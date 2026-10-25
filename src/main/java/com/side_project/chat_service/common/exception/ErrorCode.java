@@ -8,6 +8,7 @@ public enum ErrorCode {
     NOT_A_MEMBER(HttpStatus.NOT_FOUND, "Hoi thoai khong ton tai"),
     CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Hoi thoai khong ton tai"),
     FORBIDDEN_ROLE(HttpStatus.FORBIDDEN, "Khong du quyen trong hoi thoai nay"),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "Nguoi dung khong ton tai"),
     CONFLICT(HttpStatus.CONFLICT, "Xung dot nghiep vu"),
     INVALID_REQUEST(HttpStatus.UNPROCESSABLE_ENTITY, "Du lieu gui len khong hop le");
 

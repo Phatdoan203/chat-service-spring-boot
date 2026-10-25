@@ -36,7 +36,7 @@ Vi phạm hay gặp nhất là controller gọi repository cho một câu `GET` 
 
 - **Không dùng quan hệ JPA** (`@ManyToOne`, `@OneToMany`). Entity giữ id thô: `UUID conversationId`, không phải `Conversation conversation`.
   Lý do: service này không bao giờ cần duyệt object graph — mọi truy vấn đều lọc theo id và trả projection. Bỏ quan hệ là bỏ luôn N+1, `LazyInitializationException`, và chuyện phải nhớ `fetch join`.
-- Không có bảng user: `userId` là varchar thô trong các bảng chat. Interface projection `ConversationListView` nằm ở `dto/response/`.
+- Có bảng `app_user`; `userId`/`senderId`/`createdBy` là `uuid` thô (không quan hệ JPA) và có FK tới `app_user(id)` (ADR-0006). Interface projection `ConversationListView` nằm ở `dto/response/`.
 - `@Id` do ứng dụng sinh (`UUID.randomUUID()`) hoặc để DB `DEFAULT gen_random_uuid()`. Không `@GeneratedValue(AUTO)`.
 - Không `@Data` của Lombok trên entity — nó sinh `equals`/`hashCode` theo mọi field, sai với entity có id. Dùng `@Getter`, `@Setter` và constructor rõ ràng.
 - Truy vấn phức tạp (danh sách hội thoại kèm unread, lấy bù theo `seq`) viết `@Query` native hoặc JPQL trả về **interface projection**, không lấy entity rồi map bằng Java.
