@@ -39,6 +39,31 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  # Chi la producer: outbox day notification thang sang processor. Chung broker dev voi processor
+  # (docker-compose cua processor: EXTERNAL localhost:9092).
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      retries: 2147483647
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+
+# Tich hop notification qua Kafka. Xem .claude/plan/notification-kafka-integration.md
+chat:
+  outbox:
+    publisher:
+      enabled: ${OUTBOX_PUBLISHER_ENABLED:true}   # bat o dung 1 instance (xem OutboxPublisher)
+      interval-ms: 200
+  notification:
+    push-enabled: true
+    inapp-enabled: false   # bat khi processor da them type INAPP (xem processor-requirements.md)
+    topics:
+      inapp: inapp-events
+      push: push-events
+
 logging:
   level:
     "com.side_project.chat_service": DEBUG
